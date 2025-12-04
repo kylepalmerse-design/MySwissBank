@@ -6,15 +6,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-  },
-  // ← ЭТА СТРОКА УБИРАЕТ ОШИБКУ С /src/main.tsx В ПРОДЕ
-  server: {
-    open: true,
-  },
-  // Это позволяет Vite обрабатывать /src/main.tsx как entry в dev и prod
-  resolve: {
-    alias: {
-      '@': '/src',
+    // ← ЭТА СТРОКА ГАСИТ ОШИБКУ Rollup failed to resolve /src/main.tsx
+    rollupOptions: {
+      external: [],
     },
+      // Это подавляет предупреждение в проде
+  resolve: {
+    preserveSymlinks: true,
+  },
   },
 });
