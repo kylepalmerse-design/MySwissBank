@@ -4,7 +4,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import bcrypt from 'bcryptjs';
 import { users } from './schema';
 import { eq } from 'drizzle-orm';
 
@@ -18,20 +17,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// СИД — ИСПРАВЛЕННЫЙ
+// СИД — добавляем marco.rossi, если его нет (пароль в открытом виде, как в твоей таблице)
 const seedTestUser = async () => {
   try {
-    const existing = await db
-      .select()
-      .from(users)
-      .where(eq(users.login, 'marco.rossi'))
-      .limit(1);
-
+    const existing = await db.select().from(users).where(eq(users.username, 'marco.rossi')).limit(1);
     if (existing.length === 0) {
-      const hash = await bcrypt.hash('password456', 10);
       await db.insert(users).values({
-        login: 'marco.rossi',
-        password: hash,
+        username: 'marco.rossi',
+        password: 'password456',  // ← Открытый пароль, как в твоей таблице
+        name: 'Marco Rossi',
       });
       console.log('Test user created: marco.rossi / password456');
     }
@@ -41,39 +35,35 @@ const seedTestUser = async () => {
 };
 seedTestUser();
 
-// ЛОГИН — ИСПРАВЛЕННЫЙ
+// ЛОГИН — под твою таблицу (username + password без хэша)
 app.post('/api/login', async (req, res) => {
-  const { login, password } = req.body;
+  const { username, password } = req.body;
 
-  if (!login || !password) {
-    return res.status(400).json({ message: 'Login and password required' });
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password required' });
   }
 
   try {
-    const result = await db
-      .select()
-      .from(users)
-      .where(eq(users.login, login))
-      .limit(1);
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
 
     if (result.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const user = result[0];
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match) {
+    // Простое сравнение пароля (без bcrypt, как в твоей таблице)
+    if (user.password !== password) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    res.json({ message: 'Login successful', user: user.login });
+    res.json({ message: 'Login successful', user: user.username, name: user.name });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
+// SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
