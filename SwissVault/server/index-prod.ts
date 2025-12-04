@@ -16,23 +16,16 @@ const db = drizzle(sql);
 
 app.use(cors());
 app.use(express.json());
-
-// Отдаём статику (фронтенд)
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// === СИД ТЕСТОВОГО ПОЛЬЗОВАТЕЛЯ ===
+// СИД — теперь с login
 const seedTestUser = async () => {
   try {
-    const existing = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, 'marco.rossi'))
-      .limit(1);
-
+    const existing = await db.select().from(users).where(eq(users.login, 'marco.rossi')).limit(1);
     if (existing.length === 0) {
       const hash = await bcrypt.hash('password456', 10);
       await db.insert(users).values({
-        email: 'marco.rossi',
+        login: 'marco.rossi',
         password: hash,
       });
       console.log('Test user created: marco.rossi / password456');
@@ -43,16 +36,16 @@ const seedTestUser = async () => {
 };
 seedTestUser();
 
-// === ЛОГИН ===
+// ЛОГИН — теперь с login
 app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { login, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password required' });
+  if (!login || !password) {
+    return res.status(400).json({ message: 'Login and password required' });
   }
 
   try {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const result = await db.select().from(users).where(eq(users.login, login)).limit(1);
 
     if (result.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -65,14 +58,13 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    res.json({ message: 'Login successful', user: user.email });
+    res.json({ message: 'Login successful', user: user.login });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
