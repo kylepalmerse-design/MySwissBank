@@ -18,10 +18,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// СИД — теперь с login
+// СИД — ИСПРАВЛЕННЫЙ
 const seedTestUser = async () => {
   try {
-    const existing = await db.select().from(users).where(eq(users.login, 'marco.rossi')).limit(1);
+    const existing = await db
+      .select()
+      .from(users)
+      .where(eq(users.login, 'marco.rossi'))
+      .limit(1);
+
     if (existing.length === 0) {
       const hash = await bcrypt.hash('password456', 10);
       await db.insert(users).values({
@@ -36,7 +41,7 @@ const seedTestUser = async () => {
 };
 seedTestUser();
 
-// ЛОГИН — теперь с login
+// ЛОГИН — ИСПРАВЛЕННЫЙ
 app.post('/api/login', async (req, res) => {
   const { login, password } = req.body;
 
@@ -45,7 +50,11 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-    const result = await db.select().from(users).where(eq(users.login, login)).limit(1);
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.login, login))
+      .limit(1);
 
     if (result.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
