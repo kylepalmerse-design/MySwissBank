@@ -1,36 +1,40 @@
 import { useState } from 'react';
 
 function App() {
-  const [login, setLogin] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [user, setUser] = useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login, password }),
-    });
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
-    if (res.ok) {
-      setUser(login);
-    } else {
-      setError(data.message || 'Login failed');
+      const data = await res.json();
+      if (res.ok) {
+        setLoggedIn(true);
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('Network error');
     }
   };
 
-  if (user) {
+  if (loggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
-        <div className="bg-gray-800 p-10 rounded-xl shadow-2xl">
-          <h1 className="text-4xl font-bold mb-6">Welcome, {user}!</h1>
-          <p className="text-xl">Your Swiss Bank vault is secure</p>
-          <button onClick={() => setUser(null)} className="mt-6 bg-red-600 px-6 py-3 rounded hover:bg-red-700">
+        <div className="bg-gray-800 p-10 rounded-xl shadow-2xl text-center">
+          <h1 className="text-4xl font-bold mb-6">Welcome to Swiss Vault!</h1>
+          <p className="text-xl mb-6">Your balance: $1,000,000</p>
+          <button onClick={() => setLoggedIn(false)} className="bg-red-600 px-6 py-3 rounded hover:bg-red-700">
             Logout
           </button>
         </div>
@@ -44,16 +48,16 @@ function App() {
         <h1 className="text-3xl font-bold mb-8 text-center">My Swiss Bank</h1>
         <form onSubmit={handleLogin}>
           <input
-            type="text"
-            placeholder="Login"
-            value={login}
-            onChange={(e) => setLogin(e.target.value)}
+            type="email"
+            placeholder="Email (marco.rossi)"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full p-3 mb-4 bg-gray-700 rounded text-white"
             required
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder="Password (password456)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-3 mb-6 bg-gray-700 rounded text-white"
@@ -64,8 +68,8 @@ function App() {
             Login
           </button>
         </form>
-        <p className="text-center mt-6 text-gray-400">
-          Try: marco.rossi / password456
+        <p className="text-center mt-6 text-gray-400 text-sm">
+          Test: marco.rossi / password456
         </p>
       </div>
     </div>
